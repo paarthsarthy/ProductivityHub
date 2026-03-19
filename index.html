@@ -321,14 +321,7 @@ var activeFilter = 'all';
 
 var DEFAULT_VIDEOS = [
   {title:"How Private Equity Works",channel:"Patrick Boyle",youtube_id:"bOFxjGMFfgI",duration:"12 min",category:"Private Equity",week:"1",tip:"Private equity firms typically target a 20-25% IRR on their investments."},
-  {title:"Venture Capital vs Private Equity",channel:"Plain Bagel",youtube_id:"_lGS5lNQRBY",duration:"10 min",category:"Venture Capital",week:"1",tip:"VC bets on growth potential; PE bets on operational improvement and financial engineering."},
-  {title:"How Startups Get Funded: Seed to Series A",channel:"Y Combinator",youtube_id:"677ZtSMr4-4",duration:"15 min",category:"Venture Capital",week:"1",tip:"Most startups raise a seed round to prove product-market fit before approaching Series A investors."},
-  {title:"Leveraged Buyouts (LBOs) Explained Simply",channel:"Afzal Hussein",youtube_id:"7TPKjzxbQPg",duration:"12 min",category:"Private Equity",week:"2",tip:"In an LBO, the acquired company's own cash flows repay the debt used to buy it."},
-  {title:"How VCs Evaluate Startups",channel:"Sequoia Capital",youtube_id:"HZcXUp7p5kg",duration:"15 min",category:"Venture Capital",week:"2",tip:"Top VCs look for 10x return potential and a founding team that executes relentlessly."},
-  {title:"Famous Private Equity Deals Explained",channel:"Patrick Boyle",youtube_id:"6i3mzxR4HjI",duration:"14 min",category:"Private Equity",week:"2",tip:"The KKR buyout of RJR Nabisco in 1989 defined the modern private equity industry."},
-  {title:"SoftBank's Vision Fund Explained",channel:"Bloomberg Originals",youtube_id:"IHQ5h39f3ZU",duration:"18 min",category:"Venture Capital",week:"3",tip:"The Vision Fund's $100B size forced it to write checks larger than most startups could absorb."},
-  {title:"Anatomy of a Startup Pitch",channel:"Y Combinator",youtube_id:"p1dvGaJv-c4",duration:"12 min",category:"Venture Capital",week:"3",tip:"The best pitch decks tell a clear story: problem, solution, traction, ask."},
-  {title:"Private Equity Scandals and Lessons",channel:"Acquired Podcast",youtube_id:"dGPYs9e0qng",duration:"15 min",category:"Private Equity",week:"3",tip:"Many PE failures share one root cause: too much debt relative to cash generation."}
+  {title:"How Startups Get Funded: Seed to Series A",channel:"Y Combinator",youtube_id:"677ZtSMr4-4",duration:"15 min",category:"Venture Capital",week:"1",tip:"Most startups raise a seed round to prove product-market fit before Series A."}
 ];
 
 if (!videos.length) { videos = DEFAULT_VIDEOS; save('ph_videos', videos); }
@@ -432,7 +425,6 @@ function openVideo(v) {
   curVid = v;
   document.getElementById('player-title').textContent = v.title;
   document.getElementById('player-ch-info').textContent = '&#128250; '+(v.channel||'')+'   &middot;   &#9201; '+(v.duration||'');
-  document.getElementById('player-thumb').src = 'https://img.youtube.com/vi/'+v.youtube_id+'/hqdefault.jpg';
   document.getElementById('yt-iframe').src = 'https://www.youtube.com/embed/' + v.youtube_id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
   document.getElementById('player-note-ta').value = vidNotes[v.youtube_id] || '';
   updateWatchBtn();
@@ -593,7 +585,7 @@ function clearAll() {
 
 
 
- renderHome(); renderVideos(); renderNotes(); renderHistory(); }
+function renderAll() { renderHome(); renderVideos(); renderNotes(); renderHistory(); }
 function save(k,v) { localStorage.setItem(k, JSON.stringify(v)); }
 function escV(v) { return "'" + JSON.stringify(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'") + "'"; }
 function toast(msg) {
