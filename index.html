@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Productivity Hub</title>
+  <meta name="theme-color" content="#070b14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ProdHub">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg:       #070b14;
+      --bg2:      #0a0f1c;
+      --surface:  #0d1422;
+      --surface2: #111827;
+      --border:   #182038;
+      --border2:  #223060;
+      --accent:   #ff6600;
+      --accent-d: #cc4400;
+      --blue:     #1a7fff;
+      --green:    #00c853;
+      --red:      #ff3d3d;
+      --yellow:   #ffc107;
+      --text:     #cdd8ea;
+      --text2:    #607090;
+      --text3:    #2e3f58;
+      --mono:     'IBM Plex Mono', monospace;
+      --sans:     'IBM Plex Sans', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ── STATUS BAR ── */
+    #status-bar {
+      background: #050810;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .sb-brand {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .sb-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .sb-clock {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text2);
+    }
+    .sb-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── HEADER ── */
+    #app-header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 11px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header-left h1 {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header-left .tagline {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-top: 1px;
+    }
+    .header-right { display: flex; gap: 8px; align-items: center; }
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      width: 34px; height: 34px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── SCROLLABLE CONTENT ── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* ── BOTTOM TAB BAR ── */
+    #tab-bar {
+      flex-shrink: 0;
+      background: #050810;
+      border-top: 1px solid var(--border);
+      display: flex;
+      height: 58px;
+      z-index: 100;
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .tab-btn .ti { font-size: 19px; line-height: 1; }
+    .tab-btn.active { color: var(--accent); }
+    .tab-btn.active::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 20%; right: 20%;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 0 0 3px 3px;
+    }
+
+    /* ── TAB PANELS ── */
+    .tab-panel { display: none; padding: 16px 14px 80px; animation: fadeIn 0.2s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ── SECTION LABEL ── */
+    .sec-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── HOME: PROGRESS RING ── */
+    .progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+    .ring-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .ring-pct { font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--accent); }
+    .ring-lbl { font-family: var(--mono); font-size: 7px; color: var(--text3); letter-spacing: 1px; }
+    .prog-info h2 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .prog-info p { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+    .prog-info .streak { font-family: var(--mono); font-size: 9px; color: var(--yellow); margin-top: 4px; }
+
+    /* ── HOME: TIP CARD ── */
+    .tip-card {
+      background: linear-gradient(135deg, #070d20, #0a1228);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .tip-tag {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+    .tip-text { font-size: 13px; color: var(--text); line-height: 1.65; }
+
+    /* ── HOME: UPCOMING ── */
+    .upcoming-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upcoming-card:active { border-color: var(--accent); }
+    .up-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .up-bar { width: 3px; height: 36px; background: var(--accent); border-radius: 2px; flex-shrink: 0; opacity: 0.5; }
+    .up-info { flex: 1; min-width: 0; }
+    .up-title { font-size: 12px; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .up-meta { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+    .up-arrow { color: var(--text3); font-size: 13px; }
+
+    /* ── VIDEOS TAB ── */
+    .search-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      width: 100%;
+      outline: none;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: var(--accent); }
+    .search-box::placeholder { color: var(--text3); }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 5px 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .chip.active { background: rgba(255,102,0,0.1); border-color: var(--accent); color: var(--accent); }
+
+    /* ── VIDEO CARD ── */
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.1s;
+      position: relative;
+    }
+    .video-card:active { transform: scale(0.985); border-color: var(--accent); }
+    .video-card.done { border-left: 3px solid var(--green); }
+
+    .thumb {
+      position: relative;
+      width: 100%;
+      padding-bottom: 52%;
+      background: #060c18;
+      overflow: hidden;
+    }
+    .thumb img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0.75;
+      transition: opacity 0.2s;
+    }
+    .video-card:hover .thumb img { opacity: 0.9; }
+
+    .play-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 46px; height: 46px;
+      background: rgba(255, 102, 0, 0.92);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 24px rgba(255,102,0,0.4);
+    }
+    .dur-badge {
+      position: absolute;
+      bottom: 8px; right: 8px;
+      background: rgba(5,8,20,0.88);
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+    .watched-badge {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: rgba(0, 200, 83, 0.9);
+      color: #000;
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 3px;
+      letter-spacing: 1px;
+    }
+
+    .v-info { padding: 11px 13px 13px; }
+    .v-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 7px; line-height: 1.4; }
+    .v-meta { display: flex; justify-content: space-between; align-items: center; }
+    .v-channel { font-family: var(--mono); font-size: 9px; color: var(--text2); }
+    .v-week { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+    .v-tag {
+      display: inline-block;
+      margin-top: 7px;
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 1px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: rgba(26,127,255,0.08);
+      color: var(--blue);
+      border: 1px solid rgba(26,127,255,0.18);
+    }
+
+    /* ── PLAYER MODAL ── */
+    #player-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    #player-modal.open { display: flex; }
+
+    #player-topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    #player-close { background: none; border: none; color: var(--text2); font-size: 21px; cursor: pointer; padding: 2px 6px; }
+    #player-title { flex: 1; font-size: 12px; color: var(--text); font-weight: 500; line-height: 1.3; }
+    #mark-watched-btn {
+      background: none;
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+      letter-spacing: 1px;
+    }
+    #mark-watched-btn.done {
+      background: rgba(0,200,83,0.1);
+    }
+
+    #player-video {
+      width: 100%;
+      position: relative;
+      padding-bottom: 56.25%;
+      background: #000;
+      flex-shrink: 0;
+    }
+    #player-video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+
+    #player-body { flex: 1; overflow-y: auto; padding: 16px 14px; }
+    #player-ch-info { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-bottom: 16px; }
+    .note-lbl { font-family: var(--mono); font-size: 8px; letter-spacing: 3px; color: var(--accent); margin-bottom: 8px; }
+    .note-ta {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      padding: 10px 12px;
+      min-height: 90px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .note-ta:focus { border-color: var(--accent); }
+    .save-note-btn {
+      margin-top: 9px;
+      background: rgba(255,102,0,0.08);
+      border: 1px solid rgba(255,102,0,0.25);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 8px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+
+    /* ── NOTES TAB ── */
+    .gen-note-ta {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      padding: 11px 13px;
+      min-height: 90px;
+      resize: none;
+      outline: none;
+      margin-bottom: 9px;
+      transition: border-color 0.2s;
+    }
+    .gen-note-ta:focus { border-color: var(--blue); }
+    .add-note-btn {
+      background: rgba(26,127,255,0.07);
+      border: 1px solid rgba(26,127,255,0.2);
+      color: var(--blue);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 8px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    .note-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      border-radius: 9px;
+      padding: 13px 14px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .note-from {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text3);
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+    .note-from span { color: var(--blue); }
+    .note-body { font-size: 13px; color: var(--text); line-height: 1.6; }
+    .note-dt { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 7px; }
+    .note-del {
+      position: absolute;
+      top: 10px; right: 12px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* ── HISTORY TAB ── */
+    .hist-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px 13px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 11px;
+      align-items: center;
+    }
+    .hist-thumb {
+      width: 58px; height: 38px;
+      border-radius: 5px;
+      background: #060c18;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .hist-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+    .hist-info { flex: 1; min-width: 0; }
+    .hist-title { font-size: 12px; color: var(--text); margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-meta { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+    .hist-check { color: var(--green); font-size: 17px; flex-shrink: 0; }
+
+    /* ── SETTINGS MODAL ── */
+    #settings-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 20, 0.97);
+      z-index: 600;
+      overflow-y: auto;
+      padding: 20px 16px 40px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    #settings-modal.open { display: block; }
+    .sett-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .sett-header h2 { font-family: var(--mono); font-size: 13px; letter-spacing: 3px; color: var(--text); }
+    .sett-close { background: none; border: none; color: var(--text2); font-size: 22px; cursor: pointer; }
+    .step-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 15px;
+      margin-bottom: 16px;
+    }
+    .step-box h3 {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--blue);
+      margin-bottom: 11px;
+    }
+    .step-box ol { padding-left: 16px; }
+    .step-box li { font-size: 12px; color: var(--text2); line-height: 1.9; }
+    code {
+      background: rgba(26,127,255,0.07);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+    .field-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--accent); margin-bottom: 7px; display: block; }
+    .sett-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sett-input:focus { border-color: var(--accent); }
+    .hint { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+    .sett-btn {
+      background: var(--accent);
+      border: none;
+      color: #000;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      letter-spacing: 2px;
+    }
+    .sheet-status {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 5px 11px;
+      border-radius: 4px;
+      margin-top: 8px;
+      display: inline-block;
+    }
+    .sheet-status.ok { background: rgba(0,200,83,0.08); color: var(--green); border: 1px solid rgba(0,200,83,0.18); }
+    .sheet-status.err { background: rgba(255,61,61,0.08); color: var(--red); border: 1px solid rgba(255,61,61,0.18); }
+    .danger-btn {
+      background: none;
+      border: 1px solid rgba(255,61,61,0.25);
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 44px 20px;
+    }
+    .empty-ic { font-size: 38px; margin-bottom: 12px; }
+    .empty-t { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+    .empty-s { font-size: 11px; color: var(--text3); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 8px 18px;
+      border-radius: 7px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <span class="sb-brand">PRODUCTIVITY HUB</span>
+  <div class="sb-right">
+    <div class="sb-dot"></div>
+    <span class="sb-clock" id="clock">--:--</span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="app-header">
+  <div class="header-left">
+    <h1>Productivity Hub</h1>
+    <div class="tagline">PE &amp; VC · FINANCE LEARNING</div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" onclick="openSettings()" title="Settings">⚙</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+
+  <!-- HOME -->
+  <div id="tab-home" class="tab-panel active">
+    <div class="progress-card">
+      <div class="ring-wrap">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="29" fill="none" stroke="#182038" stroke-width="7"/>
+          <circle id="prog-circle" cx="36" cy="36" r="29" fill="none" stroke="#ff6600"
+            stroke-width="7" stroke-linecap="round"
+            stroke-dasharray="182.2" stroke-dashoffset="182.2"
+            style="transition: stroke-dashoffset 1s ease;"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-pct" id="ring-pct">0%</div>
+          <div class="ring-lbl">DONE</div>
+        </div>
+      </div>
+      <div class="prog-info">
+        <h2 id="prog-title">Start Learning</h2>
+        <p id="prog-sub">0 of 0 sessions completed</p>
+        <div class="streak" id="prog-streak"></div>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-tag">▸ DAILY INSIGHT</div>
+      <div class="tip-text" id="daily-tip">Connect your sheet in Settings to load curated insights — or start watching a video now.</div>
+    </div>
+
+    <div class="sec-label">Next Up</div>
+    <div id="upcoming-list">
+      <div class="empty"><div class="empty-ic">📋</div><div class="empty-t">No sessions yet</div><div class="empty-s">Connect your Google Sheet in ⚙ Settings</div></div>
+    </div>
+  </div>
+
+  <!-- VIDEOS -->
+  <div id="tab-videos" class="tab-panel">
+    <input class="search-box" id="search-input" type="text" placeholder="▸ Search videos..." oninput="filterVideos()">
+    <div class="filter-row" id="filter-row">
+      <button class="chip active" onclick="setFilter('all',this)">ALL</button>
+    </div>
+    <div id="video-grid">
+      <div class="empty"><div class="empty-ic">🎬</div><div class="empty-t">No videos loaded</div><div class="empty-s">Tap ⚙ Settings to connect your Google Sheet</div></div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div id="tab-notes" class="tab-panel">
+    <div class="sec-label">Add Note</div>
+    <textarea class="gen-note-ta" id="gen-note-ta" placeholder="Jot a concept, term, or insight from today's session..."></textarea>
+    <button class="add-note-btn" onclick="addGeneralNote()">+ SAVE NOTE</button>
+    <div class="sec-label">All Notes</div>
+    <div id="notes-list"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="tab-panel">
+    <div class="sec-label">Watch History</div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+<!-- TAB BAR -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('home',this)">
+    <span class="ti">⬛</span><span>HOME</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('videos',this)">
+    <span class="ti">▶</span><span>VIDEOS</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('notes',this)">
+    <span class="ti">📝</span><span>NOTES</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('history',this)">
+    <span class="ti">🕐</span><span>HISTORY</span>
+  </button>
+</div>
+
+<!-- PLAYER MODAL -->
+<div id="player-modal">
+  <div id="player-topbar">
+    <button id="player-close" onclick="closePlayer()">✕</button>
+    <div id="player-title">Loading...</div>
+    <button id="mark-watched-btn" onclick="markWatched()">○ Mark Done</button>
+  </div>
+  <div id="player-video">
+    <iframe id="yt-frame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+  </div>
+  <div id="player-body">
+    <div id="player-ch-info"></div>
+    <div class="note-lbl">▸ SESSION NOTES</div>
+    <textarea class="note-ta" id="player-note-ta" placeholder="Key insight from this video..."></textarea>
+    <button class="save-note-btn" onclick="savePlayerNote()">SAVE NOTE</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal">
+  <div class="sett-header">
+    <h2>⚙ SETTINGS</h2>
+    <button class="sett-close" onclick="closeSettings()">✕</button>
+  </div>
+
+  <div class="step-box">
+    <h3>▸ HOW TO CONNECT YOUR GOOGLE SHEET</h3>
+    <ol>
+      <li>Create a new Google Sheet</li>
+      <li>Row 1 headers: <code>title</code> <code>channel</code> <code>youtube_id</code> <code>duration</code> <code>category</code> <code>week</code> <code>tip</code></li>
+      <li>Add your videos — Claude will give you the data to paste</li>
+      <li>Go to <strong>File → Share → Publish to web</strong></li>
+      <li>Choose <strong>Entire Document</strong> → <strong>CSV</strong></li>
+      <li>Click <strong>Publish</strong> and copy the URL</li>
+    </ol>
+  </div>
+
+  <div style="margin-bottom:18px;">
+    <label class="field-lbl">GOOGLE SHEET CSV URL</label>
+    <input class="sett-input" id="sheet-url-input" type="url"
+      placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv">
+    <div id="sheet-status-msg"></div>
+    <p class="hint">Paste the "Publish to web" CSV link from your Google Sheet.</p>
+    <button class="sett-btn" onclick="connectSheet()">↻ CONNECT SHEET</button>
+  </div>
+
+  <div style="border-top:1px solid var(--border); padding-top: 18px;">
+    <button class="danger-btn" onclick="clearAll()">⚠ CLEAR ALL DATA &amp; HISTORY</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────
+let videos   = JSON.parse(localStorage.getItem('ph_videos')   || '[]');
+let watched  = JSON.parse(localStorage.getItem('ph_watched')  || '{}');
+let vidNotes = JSON.parse(localStorage.getItem('ph_vnotes')   || '{}');
+let genNotes = JSON.parse(localStorage.getItem('ph_gnotes')   || '[]');
+let history  = JSON.parse(localStorage.getItem('ph_history')  || '[]');
+let curVid   = null;
+let activeFilter = 'all';
+
+// Default videos baked in so app works immediately
+const DEFAULT_VIDEOS = [
+  { title:"How Private Equity Works", channel:"Patrick Boyle", youtube_id:"bOFxjGMFfgI", duration:"12 min", category:"Private Equity", week:"1", tip:"Private equity firms typically target a 20-25% IRR (Internal Rate of Return) on their investments." },
+  { title:"Venture Capital vs Private Equity — What's the Difference", channel:"Plain Bagel", youtube_id:"_lGS5lNQRBY", duration:"10 min", category:"Venture Capital", week:"1", tip:"VC bets on growth potential; PE bets on operational improvement and financial engineering." },
+  { title:"How Startups Get Funded: Seed to Series A", channel:"Y Combinator", youtube_id:"677ZtSMr4-4", duration:"15 min", category:"Venture Capital", week:"1", tip:"Most startups raise a seed round to prove product-market fit before approaching Series A investors." },
+  { title:"Leveraged Buyouts (LBOs) Explained Simply", channel:"Afzal Hussein", youtube_id:"7TPKjzxbQPg", duration:"12 min", category:"Private Equity", week:"2", tip:"In an LBO, the acquired company's own cash flows are used to repay the debt used to buy it." },
+  { title:"How VCs Evaluate Startups", channel:"Sequoia Capital", youtube_id:"HZcXUp7p5kg", duration:"15 min", category:"Venture Capital", week:"2", tip:"Top VCs look for 10x return potential and a founding team that can execute relentlessly." },
+  { title:"Famous Private Equity Deals Explained", channel:"Patrick Boyle", youtube_id:"6i3mzxR4HjI", duration:"14 min", category:"Private Equity", week:"2", tip:"The KKR buyout of RJR Nabisco in 1989 defined the modern private equity industry." },
+  { title:"SoftBank's Vision Fund — The Biggest Bet in Tech History", channel:"Bloomberg Originals", youtube_id:"IHQ5h39f3ZU", duration:"18 min", category:"Venture Capital", week:"3", tip:"The Vision Fund's $100B size forced it to write checks larger than most startups could productively absorb." },
+  { title:"Anatomy of a Startup Pitch", channel:"Y Combinator", youtube_id:"p1dvGaJv-c4", duration:"12 min", category:"Venture Capital", week:"3", tip:"The best pitch decks tell a clear story: problem → solution → traction → ask." },
+  { title:"Private Equity Scandals and Lessons", channel:"Acquired Podcast", youtube_id:"dGPYs9e0qng", duration:"15 min", category:"Private Equity", week:"3", tip:"Many PE failures share one root cause: too much debt relative to the business's ability to generate cash." },
+];
+
+if (!videos.length) {
+  videos = DEFAULT_VIDEOS;
+  save('ph_videos', videos);
+}
+
+// ─── CLOCK ───────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+// ─── TABS ─────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'notes')   renderNotes();
+  if (name === 'history') renderHistory();
+}
+
+// ─── HOME ─────────────────────────────────────────────────────
+function renderHome() {
+  const total = videos.length;
+  const done  = videos.filter(v => watched[v.youtube_id]).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+
+  const circ = 2 * Math.PI * 29;
+  document.getElementById('prog-circle').style.strokeDashoffset = circ - (pct / 100) * circ;
+  document.getElementById('ring-pct').textContent = pct + '%';
+  document.getElementById('prog-title').textContent = pct === 100 ? '🏆 All Done!' : pct > 50 ? 'Great Progress!' : pct > 0 ? 'Keep Going!' : 'Start Learning';
+  document.getElementById('prog-sub').textContent = `${done} of ${total} sessions completed`;
+
+  // Daily tip
+  const tips = videos.filter(v => v.tip).map(v => v.tip);
+  if (tips.length) {
+    const idx = Math.floor(Date.now() / 86400000) % tips.length;
+    document.getElementById('daily-tip').textContent = tips[idx];
+  }
+
+  // Upcoming: next 5 unwatched
+  const upcoming = videos.filter(v => !watched[v.youtube_id]).slice(0, 5);
+  const ul = document.getElementById('upcoming-list');
+  if (!upcoming.length) {
+    ul.innerHTML = total > 0
+      ? `<div class="empty"><div class="empty-ic">🎉</div><div class="empty-t">All videos completed!</div></div>`
+      : `<div class="empty"><div class="empty-ic">📋</div><div class="empty-t">No sessions yet</div><div class="empty-s">Connect your Google Sheet in ⚙ Settings</div></div>`;
+  } else {
+    ul.innerHTML = upcoming.map((v, i) => `
+      <div class="upcoming-card" onclick='openVideo(${esc(v)})'>
+        <div class="up-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="up-bar"></div>
+        <div class="up-info">
+          <div class="up-title">${v.title}</div>
+          <div class="up-meta">${v.channel || ''} · ${v.duration || ''} · WK ${v.week || '?'}</div>
+        </div>
+        <div class="up-arrow">›</div>
+      </div>`).join('');
+  }
+}
+
+// ─── VIDEOS ───────────────────────────────────────────────────
+function renderVideos() {
+  const cats = [...new Set(videos.map(v => v.category).filter(Boolean))];
+  const fr = document.getElementById('filter-row');
+  fr.innerHTML = `<button class="chip ${activeFilter==='all'?'active':''}" onclick="setFilter('all',this)">ALL</button>` +
+    cats.map(c => `<button class="chip ${activeFilter===c?'active':''}" onclick="setFilter('${c}',this)">${c.toUpperCase()}</button>`).join('');
+  filterVideos();
+}
+
+function setFilter(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterVideos();
+}
+
+function filterVideos() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  const list = videos.filter(v => {
+    const matchCat = activeFilter === 'all' || v.category === activeFilter;
+    const matchQ   = !q || v.title.toLowerCase().includes(q) || (v.channel||'').toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  const grid = document.getElementById('video-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-ic">🔍</div><div class="empty-t">No results</div></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(v => {
+    const done  = !!watched[v.youtube_id];
+    const thumb = `https://img.youtube.com/vi/${v.youtube_id}/mqdefault.jpg`;
+    return `
+      <div class="video-card ${done?'done':''}" onclick='openVideo(${esc(v)})'>
+        <div class="thumb">
+          <img src="${thumb}" loading="lazy" onerror="this.style.display='none'">
+          <div class="play-btn">▶</div>
+          ${v.duration ? `<div class="dur-badge">${v.duration}</div>` : ''}
+          ${done ? `<div class="watched-badge">✓ DONE</div>` : ''}
+        </div>
+        <div class="v-info">
+          <div class="v-title">${v.title}</div>
+          <div class="v-meta">
+            <span class="v-channel">${v.channel||''}</span>
+            <span class="v-week">${v.week?'WK '+v.week:''}</span>
+          </div>
+          ${v.category ? `<span class="v-tag">${v.category}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── PLAYER ───────────────────────────────────────────────────
+function openVideo(v) {
+  if (typeof v === 'string') v = JSON.parse(v);
+  curVid = v;
+  document.getElementById('player-title').textContent = v.title;
+  document.getElementById('player-ch-info').textContent = `📺 ${v.channel||''}   ·   ⏱ ${v.duration||''}`;
+  document.getElementById('yt-frame').src = `https://www.youtube.com/embed/${v.youtube_id}?autoplay=1&rel=0&modestbranding=1`;
+  document.getElementById('player-note-ta').value = vidNotes[v.youtube_id] || '';
+  updateWatchBtn();
+  document.getElementById('player-modal').classList.add('open');
+  document.getElementById('content').style.overflow = 'hidden';
+}
+
+function closePlayer() {
+  document.getElementById('yt-frame').src = '';
+  document.getElementById('player-modal').classList.remove('open');
+  document.getElementById('content').style.overflow = '';
+  curVid = null;
+}
+
+function updateWatchBtn() {
+  if (!curVid) return;
+  const done = !!watched[curVid.youtube_id];
+  const btn = document.getElementById('mark-watched-btn');
+  btn.textContent = done ? '✓ Watched' : '○ Mark Done';
+  btn.className   = done ? 'done' : '';
+}
+
+function markWatched() {
+  if (!curVid) return;
+  const id = curVid.youtube_id;
+  const wasDone = watched[id];
+  watched[id] = !wasDone;
+  save('ph_watched', watched);
+
+  if (!wasDone) {
+    history = [{ youtube_id: id, title: curVid.title, channel: curVid.channel, at: new Date().toISOString() },
+               ...history.filter(h => h.youtube_id !== id)];
+    save('ph_history', history);
+    toast('✓ Marked as watched!');
+  } else {
+    history = history.filter(h => h.youtube_id !== id);
+    save('ph_history', history);
+    toast('Unmarked');
+  }
+  updateWatchBtn();
+  renderHome();
+  renderVideos();
+}
+
+function savePlayerNote() {
+  if (!curVid) return;
+  const txt = document.getElementById('player-note-ta').value.trim();
+  if (!txt) { toast('⚠ Nothing to save'); return; }
+  vidNotes[curVid.youtube_id] = txt;
+  vidNotes['_t_' + curVid.youtube_id] = curVid.title;
+  vidNotes['_d_' + curVid.youtube_id] = new Date().toISOString();
+  save('ph_vnotes', vidNotes);
+  toast('✓ Note saved!');
+}
+
+// ─── NOTES ────────────────────────────────────────────────────
+function renderNotes() {
+  const vids = Object.keys(vidNotes)
+    .filter(k => !k.startsWith('_'))
+    .map(id => ({ id, title: vidNotes['_t_'+id]||id, body: vidNotes[id], dt: vidNotes['_d_'+id]||'', type:'vid' }))
+    .filter(n => n.body);
+
+  const gens = genNotes.map((n,i) => ({ ...n, id: 'g_'+i, title:'General Note', type:'gen' }));
+
+  const all = [...gens, ...vids].sort((a,b) => new Date(b.dt||0) - new Date(a.dt||0));
+  const list = document.getElementById('notes-list');
+
+  if (!all.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-ic">📝</div><div class="empty-t">No notes yet</div><div class="empty-s">Watch a video and jot down insights</div></div>`;
+    return;
+  }
+
+  list.innerHTML = all.map(n => `
+    <div class="note-item">
+      <div class="note-from">${n.type==='gen'?'📌 GENERAL':'📺 '}<span>${n.title}</span></div>
+      <div class="note-body">${n.body}</div>
+      ${n.dt ? `<div class="note-dt">${new Date(n.dt).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})}</div>` : ''}
+    </div>`).join('');
+}
+
+function addGeneralNote() {
+  const txt = document.getElementById('gen-note-ta').value.trim();
+  if (!txt) return;
+  genNotes.unshift({ body: txt, dt: new Date().toISOString() });
+  save('ph_gnotes', genNotes);
+  document.getElementById('gen-note-ta').value = '';
+  toast('✓ Note saved!');
+  renderNotes();
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!history.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-ic">🕐</div><div class="empty-t">No history yet</div><div class="empty-s">Start watching to track your progress</div></div>`;
+    return;
+  }
+  list.innerHTML = history.map(h => `
+    <div class="hist-item">
+      <div class="hist-thumb"><img src="https://img.youtube.com/vi/${h.youtube_id}/mqdefault.jpg" loading="lazy"></div>
+      <div class="hist-info">
+        <div class="hist-title">${h.title}</div>
+        <div class="hist-meta">${h.channel||''} · ${h.at ? new Date(h.at).toLocaleDateString([],{month:'short',day:'numeric'}) : ''}</div>
+      </div>
+      <div class="hist-check">✓</div>
+    </div>`).join('');
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('sheet-url-input').value = localStorage.getItem('ph_sheet_url') || '';
+  document.getElementById('sheet-status-msg').innerHTML = '';
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+
+async function connectSheet() {
+  const url = document.getElementById('sheet-url-input').value.trim();
+  if (!url) { toast('⚠ Enter a sheet URL'); return; }
+  const msg = document.getElementById('sheet-status-msg');
+  msg.className = 'sheet-status'; msg.textContent = 'Connecting…';
+
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://cors-anywhere.herokuapp.com/${u}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
+
+  let lastErr = '';
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const csv = await res.text();
+      if (csv.includes('<html') || csv.includes('<!DOCTYPE')) throw new Error('Got HTML not CSV');
+      const parsed = parseCSV(csv);
+      if (!parsed.length) throw new Error('No rows found');
+      videos = parsed;
+      save('ph_videos', videos);
+      localStorage.setItem('ph_sheet_url', url);
+      msg.className = 'sheet-status ok';
+      msg.textContent = `✓ ${parsed.length} videos loaded`;
+      toast(`✓ ${parsed.length} videos synced!`);
+      renderAll();
+      setTimeout(closeSettings, 1400);
+      return;
+    } catch (e) { lastErr = e.message; }
+  }
+
+  msg.className = 'sheet-status err';
+  msg.textContent = '✕ All proxies failed — see below';
+  msg.insertAdjacentHTML('afterend', `<p class="hint" style="color:#ff6600;margin-top:8px;">
+    Make sure your sheet is published as <strong>CSV</strong> (not HTML).<br>
+    URL must end with <code>pub?output=csv</code>
+  </p>`);
+}
+
+function parseCSV(text) {
+  const rows = text.trim().split('\n');
+  if (rows.length < 2) return [];
+  const headers = parseRow(rows[0]).map(h => h.toLowerCase().trim());
+  return rows.slice(1)
+    .map(r => {
+      const cols = parseRow(r);
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = (cols[i]||'').trim(); });
+      return obj;
+    })
+    .filter(v => v.title && v.youtube_id);
+}
+
+function parseRow(line) {
+  const cols = []; let cur = '', inQ = false;
+  for (const ch of line) {
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  cols.push(cur);
+  return cols.map(c => c.replace(/^"|"$/g,''));
+}
+
+function clearAll() {
+  if (!confirm('Delete all progress, history and notes?')) return;
+  ['ph_watched','ph_vnotes','ph_gnotes','ph_history','ph_videos','ph_sheet_url'].forEach(k => localStorage.removeItem(k));
+  watched={}; vidNotes={}; genNotes=[]; history=[]; videos=DEFAULT_VIDEOS; save('ph_videos',videos);
+  renderAll(); closeSettings(); toast('✓ Data cleared');
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────
+function renderAll() { renderHome(); renderVideos(); renderNotes(); renderHistory(); }
+function save(k, v)  { localStorage.setItem(k, JSON.stringify(v)); }
+function esc(v)      { return JSON.stringify(JSON.stringify(v)).slice(1,-1); }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderAll();
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
