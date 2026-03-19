@@ -115,13 +115,9 @@
     #mark-watched-btn { background:none; border:1px solid var(--green); color:var(--green); font-family:var(--mono); font-size:9px; padding:5px 10px; border-radius:5px; cursor:pointer; white-space:nowrap; letter-spacing:1px; }
     #mark-watched-btn.done { background:rgba(0,200,83,0.1); }
 
-    /* PLAYER THUMBNAIL */
-    #player-thumb-wrap { position:relative; width:100%; padding-bottom:56.25%; background:#000; flex-shrink:0; overflow:hidden; }
-    #player-thumb-wrap img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.45; }
-    #player-thumb-wrap .watch-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
-    .yt-btn { background:#ff0000; color:#fff; border:none; padding:15px 34px; border-radius:10px; font-family:var(--mono); font-size:14px; font-weight:700; cursor:pointer; letter-spacing:2px; text-decoration:none; display:inline-flex; align-items:center; gap:10px; box-shadow:0 4px 24px rgba(255,0,0,0.4); }
-    .yt-btn:active { opacity:0.85; transform:scale(0.97); }
-    .yt-sublabel { font-family:var(--mono); font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:2px; }
+    /* PLAYER VIDEO */
+    #player-video-wrap { position:relative; width:100%; padding-bottom:56.25%; background:#000; flex-shrink:0; }
+    #player-video-wrap iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:none; }
 
     #player-body { flex:1; overflow-y:auto; padding:16px 14px; }
     #player-ch-info { font-family:var(--mono); font-size:10px; color:var(--text2); margin-bottom:16px; }
@@ -267,14 +263,13 @@
     <div id="player-title">Loading...</div>
     <button id="mark-watched-btn" onclick="markWatched()">&#9675; Mark Done</button>
   </div>
-  <div id="player-thumb-wrap">
-    <img id="player-thumb" src="" alt="">
-    <div class="watch-overlay">
-      <a id="yt-watch-btn" class="yt-btn" href="#" target="_blank">
-        <span>&#9654;</span> Watch on YouTube
-      </a>
-      <span class="yt-sublabel">OPENS IN YOUTUBE APP</span>
-    </div>
+  <div id="player-video-wrap">
+    <iframe id="yt-iframe"
+      src=""
+      frameborder="0"
+      allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+      allowfullscreen>
+    </iframe>
   </div>
   <div id="player-body">
     <div id="player-ch-info"></div>
@@ -438,7 +433,7 @@ function openVideo(v) {
   document.getElementById('player-title').textContent = v.title;
   document.getElementById('player-ch-info').textContent = '&#128250; '+(v.channel||'')+'   &middot;   &#9201; '+(v.duration||'');
   document.getElementById('player-thumb').src = 'https://img.youtube.com/vi/'+v.youtube_id+'/hqdefault.jpg';
-  document.getElementById('yt-watch-btn').href = 'https://www.youtube.com/watch?v='+v.youtube_id;
+  document.getElementById('yt-iframe').src = 'https://www.youtube.com/embed/' + v.youtube_id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
   document.getElementById('player-note-ta').value = vidNotes[v.youtube_id] || '';
   updateWatchBtn();
   document.getElementById('player-modal').classList.add('open');
@@ -446,6 +441,7 @@ function openVideo(v) {
 }
 
 function closePlayer() {
+  document.getElementById('yt-iframe').src = '';
   document.getElementById('player-modal').classList.remove('open');
   document.getElementById('content').style.overflow = '';
   curVid = null;
@@ -595,7 +591,9 @@ function clearAll() {
   renderAll(); closeSettings(); toast('Data cleared');
 }
 
-function renderAll() { renderHome(); renderVideos(); renderNotes(); renderHistory(); }
+
+
+ renderHome(); renderVideos(); renderNotes(); renderHistory(); }
 function save(k,v) { localStorage.setItem(k, JSON.stringify(v)); }
 function escV(v) { return "'" + JSON.stringify(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'") + "'"; }
 function toast(msg) {
